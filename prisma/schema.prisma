@@ -1,0 +1,56 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum OrderStatus {
+  PENDING
+  PAID
+  FAILED
+  CANCELED
+}
+
+enum ProductType {
+  PNG
+  BUNDLE
+  ALL
+}
+
+model Project {
+  id         String   @id @default(cuid())
+  title      String?
+  templateId String
+  email      String?
+  configJson Json
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  orders     Order[]
+}
+
+model Order {
+  id              String      @id @default(cuid())
+  projectId       String
+  email           String
+  productType     ProductType
+  amount          Int
+  currency        String      @default("USD")
+  status          OrderStatus @default(PENDING)
+  stripeSessionId String?     @unique
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  project         Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  downloads       Download[]
+}
+
+model Download {
+  id        String   @id @default(cuid())
+  orderId    String
+  fileType   String
+  filePath   String
+  createdAt  DateTime @default(now())
+  order      Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+}
